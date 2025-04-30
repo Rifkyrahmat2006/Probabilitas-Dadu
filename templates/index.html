@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Probabilitas Dadu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .steps {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        .steps h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .steps ol {
+            padding-left: 20px;
+        }
+        .steps li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .dice {
+            width: 200px;
+            height: 200px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease;
+            margin: 0 auto 30px;
+        }
+
+        .dice:hover {
+            transform: scale(1.05);
+        }
+
+        .dot {
+            width: 30px;
+            height: 30px;
+            background-color: black;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        /* Posisi titik untuk setiap sisi dadu */
+        .side-1 .dot { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        
+        .side-2 .dot:nth-child(1) { top: 25%; left: 25%; }
+        .side-2 .dot:nth-child(2) { bottom: 25%; right: 25%; }
+        
+        .side-3 .dot:nth-child(1) { top: 25%; left: 25%; }
+        .side-3 .dot:nth-child(2) { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .side-3 .dot:nth-child(3) { bottom: 25%; right: 25%; }
+        
+        .side-4 .dot:nth-child(1) { top: 25%; left: 25%; }
+        .side-4 .dot:nth-child(2) { top: 25%; right: 25%; }
+        .side-4 .dot:nth-child(3) { bottom: 25%; left: 25%; }
+        .side-4 .dot:nth-child(4) { bottom: 25%; right: 25%; }
+        
+        .side-5 .dot:nth-child(1) { top: 25%; left: 25%; }
+        .side-5 .dot:nth-child(2) { top: 25%; right: 25%; }
+        .side-5 .dot:nth-child(3) { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .side-5 .dot:nth-child(4) { bottom: 25%; left: 25%; }
+        .side-5 .dot:nth-child(5) { bottom: 25%; right: 25%; }
+        
+        .side-6 .dot:nth-child(1) { top: 20%; left: 20%; }
+        .side-6 .dot:nth-child(2) { top: 20%; right: 20%; }
+        .side-6 .dot:nth-child(3) { top: 50%; left: 20%; transform: translateY(-50%); }
+        .side-6 .dot:nth-child(4) { top: 50%; right: 20%; transform: translateY(-50%); }
+        .side-6 .dot:nth-child(5) { bottom: 20%; left: 20%; }
+        .side-6 .dot:nth-child(6) { bottom: 20%; right: 20%; }
+
+        /* Animasi lemparan dadu */
+        @keyframes throw {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-100px) rotate(180deg);
+            }
+            50% {
+                transform: translateY(0) rotate(360deg);
+            }
+            75% {
+                transform: translateY(-50px) rotate(540deg);
+            }
+            100% {
+                transform: translateY(0) rotate(720deg);
+            }
+        }
+
+        .throwing {
+            animation: throw 1s ease-in-out;
+        }
+
+        .dice-result {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .dice-result.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kalkulator Probabilitas Dadu</h1>
+        <div class="dice" id="dice">
+            <div class="dot"></div>
+        </div>
+        <div class="dice-result" id="diceResult">1</div>
+        <form method="POST" id="probabilityForm">
+            <input type="hidden" id="roll" name="roll" value="1">
+            <button type="submit" style="margin-top: 20px;">Hitung Probabilitas</button>
+        </form>
+        
+        <div class="result {% if probability is not none %}show{% endif %}">
+            <h2>Hasil:</h2>
+            <p>Probabilitas lemparan berikutnya adalah: {{ probability }}</p>
+        </div>
+
+        {% if roll_history %}
+        <div class="history">
+            <h3>Riwayat Lemparan Terakhir:</h3>
+            <ol>
+                {% for roll in roll_history %}
+                <li>Lemparan ke-{{ loop.index }}: {{ roll }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+
+        {% if probability is not none %}
+        <div class="steps">
+            <h3>Langkah-langkah Perhitungan:</h3>
+            <p>
+                {% for step in steps %}
+                    {{ step }}<br>
+                {% endfor %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const dice = document.getElementById('dice');
+        const diceResult = document.getElementById('diceResult');
+        const rollInput = document.getElementById('roll');
+        const probabilityForm = document.getElementById('probabilityForm');
+        let currentNumber = 1;
+        
+        // Simpan nilai dadu di localStorage
+        function saveDiceValue(value) {
+            localStorage.setItem('lastDiceValue', value);
+        }
+
+        // Ambil nilai dadu dari localStorage
+        function getSavedDiceValue() {
+            return localStorage.getItem('lastDiceValue') || 1;
+        }
+
+        function updateDice(number) {
+            dice.className = 'dice';
+            dice.classList.add(`side-${number}`);
+            dice.innerHTML = '';
+            
+            for (let i = 0; i < number; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dice.appendChild(dot);
+            }
+
+            diceResult.textContent = number;
+            rollInput.value = number;
+            currentNumber = number;
+            saveDiceValue(number);
+        }
+        
+        function rollDice() {
+            diceResult.classList.add('hidden');
+            dice.classList.add('throwing');
+            
+            const newNumber = Math.floor(Math.random() * 6) + 1;
+            
+            setTimeout(() => {
+                dice.classList.remove('throwing');
+                updateDice(newNumber);
+                setTimeout(() => {
+                    diceResult.classList.remove('hidden');
+                }, 100);
+            }, 1000);
+        }
+
+        // Pastikan nilai dadu terakhir tersimpan sebelum form disubmit
+        probabilityForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Mencegah form submit default
+            rollInput.value = currentNumber;
+            this.submit(); // Submit form secara manual
+        });
+
+        // Inisialisasi dadu dengan nilai terakhir yang disimpan
+        window.addEventListener('load', function() {
+            const savedValue = getSavedDiceValue();
+            updateDice(savedValue);
+        });
+
+        dice.addEventListener('click', rollDice);
+    </script>
+</body>
+</html> 
